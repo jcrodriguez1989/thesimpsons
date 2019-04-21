@@ -1,0 +1,38 @@
+---
+title: "The Simpsons dataset"
+output: github_document
+---
+
+```{r echo = FALSE}
+library("thesimpsons")
+```
+
+This dataset contains the characters, locations, episode details, and script 
+lines for approximately 600 Simpsons episodes, dating back to 1989.
+Data got from [Kaggle](https://www.kaggle.com/wcukierski/the-simpsons-by-the-data).
+
+This package contains four datasets:
+
+* `characters`: The Simpsons characters information.
+
+```{r}
+head(characters)
+```
+
+* `episodes`: metadata related to each The Simpsons episode.
+
+```{r}
+head(episodes[, 1:6])
+```
+
+* `locations`: The Simpsons world locations.
+
+```{r}
+head(locations)
+```
+
+* `script_lines`: the text spoken during each The Simpsons episode (including details about which character said it and where).
+
+```{r}
+head(script_lines[, 1:4])
+```
