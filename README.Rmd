@@ -36,3 +36,71 @@ head(locations)
 ```{r}
 head(script_lines[, 1:4])
 ```
+
+## Examples
+
+### Race plot: spoken words by character by season
+
+```{r, message = FALSE}
+library("thesimpsons")
+library("dplyr")
+library("ggplot2")
+library("gganimate")
+library("hrbrthemes")
+```
+
+```{r}
+# merge script lines with characters and episodes data
+script_lines %>%
+  filter(!is.na(word_count)) %>%
+  left_join(characters, by = c("character_id" = "id")) %>%
+  left_join(episodes, by = c("episode_id" = "id")) -> script_lines_full
+
+n_chars <- 10 # include only the 10 most speaking characters
+script_lines_full %>%
+  select(name, word_count, season) %>% # use just char name, word_count, season
+  group_by(name, season) %>% # by name & season
+  summarise(wc = sum(word_count)) %>% # get the sum of word counts
+  mutate(wc_cs = cumsum(wc)) %>% # generate the cum sum of wc
+  group_by(season) %>%
+  mutate( # create the ranking (top 10 to plot)
+    rank = min_rank(-wc_cs) * 1,
+    val_lbl = paste0(" ", wc_cs)
+  ) %>%
+  filter(rank <= n_chars) -> char_wc_by_season
+
+ggp <- ggplot(char_wc_by_season, aes(rank,
+  group = name,
+  fill = as.factor(name), color = as.factor(name)
+))
+ggp <- ggp + geom_tile(
+  aes(y = wc_cs / 2, height = wc_cs, width = 0.9),
+  alpha = 0.8, color = NA
+)
+ggp <- ggp + 
+  geom_text(aes(y = 0, label = paste(name, " ")), vjust = 0.2, hjust = 1) +
+  geom_text(aes(y = wc_cs, label = val_lbl, hjust = 0)) +
+  coord_flip(clip = "off", expand = FALSE) +
+  scale_x_reverse() +
+  guides(color = FALSE, fill = FALSE) +
+  labs(
+    subtitle = "Words by seasons",
+    title = "Season: {closest_state}",
+    x = ""
+  ) +
+  theme_ipsum_rc() +
+  theme(
+    plot.title = element_text(hjust = 0, size = 22),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    plot.margin = margin(1, 1, 1, 4, "cm")
+  )
+
+ggp <- ggp +
+  transition_states(season, transition_length = 4, state_length = 1) +
+  ease_aes("cubic-in-out")
+animate(ggp, nframes = 100, fps = 30, duration = 18)
+```
